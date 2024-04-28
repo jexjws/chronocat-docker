@@ -1,3 +1,7 @@
+# 参考文章
+
+- https://www.giantbranch.cn/2023/11/23/Xvfb的使用与vnc连接/
+
 # chronocat-docker
 
 本仓库是学习docker的打包与自动化构建，请下载后24小时内删除
@@ -122,4 +126,3 @@ docker exec chronocat-docker sh -c "x11vnc -storepasswd newpasswd /root/.vnc/pas
 ### 2023-9-22
 
 - 初始版本
-

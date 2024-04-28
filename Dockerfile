@@ -1,10 +1,17 @@
-# 使用基于Ubuntu 22.04的基础映像
-FROM ubuntu:22.04
+# 需要先在Dockerfile所在目录运行
+# git clone --depth 1 https://github.com/novnc/noVNC.git
+# git clone --depth 1 https://github.com/novnc/websockify.git
+
+# 再去 https://github.com/chrononeko/chronocat/releases
+# 下载 Chronocat 本体以及你需要的引擎 的 zip包 放到LiteLoaderPlugins目录下。
+
+# 使用Ubuntu 22.04
+FROM ubuntu:22.04 as builder
 
 # 设置环境变量
-ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 ENV VNC_PASSWD=vncpasswd
-
+ENV QQ_deb_Link=https://dldir1.qq.com/qqfile/qq/QQNT/Linux/QQ_3.2.7_240422_amd64_01.deb
 # 安装必要的软件包
 RUN apt-get update && apt-get install -y \
     openbox \
@@ -22,53 +29,47 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     fonts-wqy-zenhei \
     git \
-    gnutls-bin \    
+    gnutls-bin \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-# 安装novnc
-RUN git config --global http.sslVerify false && git config --global http.postBuffer 1048576000
-RUN cd /opt && git clone https://github.com/novnc/noVNC.git
-RUN cd opt/noVNC/utils && git clone https://github.com/novnc/websockify.git
-RUN cp /opt/noVNC/vnc.html /opt/noVNC/index.html     
+# 复制项目文件夹 安装：novnc和websockify
+COPY noVNC /opt/noVNC
+COPY websockify /opt/noVNC/utils/websockify
+RUN cp /opt/noVNC/vnc.html /opt/noVNC/index.html\
+    && mkdir -p ~/.vnc \
+    && touch ~/.vnc/passwd
 
-# 安装Linux QQ
-RUN curl -o /root/linuxqq_3.1.2-13107_amd64.deb https://dldir1.qq.com/qqfile/qq/QQNT/ad5b5393/linuxqq_3.1.2-13107_amd64.deb
-RUN dpkg -i /root/linuxqq_3.1.2-13107_amd64.deb && apt-get -f install -y && rm /root/linuxqq_3.1.2-13107_amd64.deb
+# 下载 安装：Linux QQ
+RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link
+RUN dpkg -i /root/linuxqq_amd64.deb && apt-get -f install -y && rm /root/linuxqq_amd64.deb
 
-# 安装LiteLoader
-RUN curl -L -o /tmp/LiteLoaderQQNT.zip https://github.com/LiteLoaderQQNT/LiteLoaderQQNT/releases/download/0.5.3/LiteLoaderQQNT.zip \
-    && unzip /tmp/LiteLoaderQQNT.zip -d /opt/QQ/resources/app/ \
+# 下载 安装：LiteLoader
+RUN curl -L -o /tmp/LiteLoaderQQNT.zip https://github.com/LiteLoaderQQNT/LiteLoaderQQNT/releases/latest/download/LiteLoaderQQNT.zip \
+    && unzip /tmp/LiteLoaderQQNT.zip -d /root/LiteLoaderQQNT/ \
     && rm /tmp/LiteLoaderQQNT.zip
 # 修改/opt/QQ/resources/app/package.json文件
-RUN sed -i 's/"main": ".\/app_launcher\/index.js"/"main": ".\/LiteLoader"/' /opt/QQ/resources/app/package.json
+RUN sed -i '1i require(String.raw`/root/LiteLoaderQQNT`);' /opt/QQ/resources/app/app_launcher/index.js
 
-# 安装chronocat  
-RUN curl -L -o /tmp/chronocat-llqqnt.zip https://ghproxy.com/https://github.com/chrononeko/chronocat/releases/download/v0.0.54/chronocat-llqqnt-v0.0.54.zip \
-  && mkdir -p /root/LiteLoaderQQNT/plugins \
-  && unzip /tmp/chronocat-llqqnt.zip -d /root/LiteLoaderQQNT/plugins/ \
-  && rm /tmp/chronocat-llqqnt.zip
+# 复制zip包 安装：chronocat
+COPY LiteLoaderPlugins/* /tmp/meow/
+RUN mkdir -p /root/LiteLoaderQQNT/plugins \
+  && find /tmp/meow/ -name '*.zip' -exec unzip -o -d /root/LiteLoaderQQNT/plugins/ {} \; \
+  && rm -r /tmp/meow/
 
-# 创建必要的目录
-RUN mkdir -p ~/.vnc
 
-# 创建启动脚本
-RUN echo "#!/bin/bash" > ~/start.sh
-RUN echo "rm /tmp/.X1-lock" >> ~/start.sh
-RUN echo "Xvfb :1 -screen 0 1280x1024x16 &" >> ~/start.sh
-RUN echo "export DISPLAY=:1" >> ~/start.sh
-RUN echo "fluxbox &" >> ~/start.sh
-RUN echo "x11vnc -display :1 -noxrecord -noxfixes -noxdamage -forever -rfbauth ~/.vnc/passwd &" >> ~/start.sh
-RUN echo "nohup /opt/noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6081 --file-only &" >> ~/start.sh
-RUN echo "x11vnc -storepasswd \$VNC_PASSWD ~/.vnc/passwd" >> ~/start.sh
-RUN echo "su -c 'qq' root" >> ~/start.sh
-RUN chmod +x ~/start.sh
+# 创建 supervisor配置、start.sh
+COPY utils/super.conf /root/
+COPY utils/start.sh /root/
+RUN cat /root/super.conf >> /etc/supervisor/supervisord.conf \
+  && chmod +x /root/start.sh \
+  && rm /root/super.conf \
+  && mkdir /root/logs
 
-# 配置supervisor
-RUN echo "[supervisord]" > /etc/supervisor/supervisord.conf
-RUN echo "nodaemon=true" >> /etc/supervisor/supervisord.conf
-RUN echo "[program:x11vnc]" >> /etc/supervisor/supervisord.conf
-RUN echo "command=/usr/bin/x11vnc -display :1 -noxrecord -noxfixes -noxdamage -forever -rfbauth ~/.vnc/passwd" >> /etc/supervisor/supervisord.conf
+# 暴露 VNC 端口
+EXPOSE 5900
 
-# 设置容器启动时运行的命令
+
+# 可以通过在命令行上传递 -n 标志来在前台启动supervisord可执行文件。这对于调试启动问题很有用。
+#CMD ["/bin/bash"]
 CMD ["/bin/bash", "-c", "/root/start.sh"]
