@@ -41,15 +41,17 @@ RUN cp /opt/noVNC/vnc.html /opt/noVNC/index.html\
     && touch ~/.vnc/passwd
 
 # 下载 安装：Linux QQ
-RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link
-RUN dpkg -i /root/linuxqq_amd64.deb && apt-get -f install -y && rm /root/linuxqq_amd64.deb
+RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link\
+    && dpkg -i /root/linuxqq_amd64.deb && apt-get -f install -y && rm /root/linuxqq_amd64.deb
+
 
 # 下载 安装：LiteLoader
 RUN curl -L -o /tmp/LiteLoaderQQNT.zip https://github.com/LiteLoaderQQNT/LiteLoaderQQNT/releases/latest/download/LiteLoaderQQNT.zip \
-    && unzip /tmp/LiteLoaderQQNT.zip -d /root/LiteLoaderQQNT/ \
-    && rm /tmp/LiteLoaderQQNT.zip
+    && unzip /tmp/LiteLoaderQQNT.zip -d /root/LiteLoaderQQNT/ && rm /tmp/LiteLoaderQQNT.zip \
 # 修改/opt/QQ/resources/app/package.json文件
-RUN sed -i '1i require(String.raw`/root/LiteLoaderQQNT`);' /opt/QQ/resources/app/app_launcher/index.js
+    && sed -i '1i require(String.raw`/root/LiteLoaderQQNT`);' /opt/QQ/resources/app/app_launcher/index.js 
+
+
 
 # 复制zip包 安装：chronocat
 COPY LiteLoaderPlugins/* /tmp/meow/
@@ -68,7 +70,6 @@ RUN cat /root/super.conf >> /etc/supervisor/supervisord.conf \
 
 # 暴露 VNC 端口
 EXPOSE 5900
-
 
 # 可以通过在命令行上传递 -n 标志来在前台启动supervisord可执行文件。这对于调试启动问题很有用。
 #CMD ["/bin/bash"]
