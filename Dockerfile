@@ -40,19 +40,21 @@ RUN cp /opt/noVNC/vnc.html /opt/noVNC/index.html\
 RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link\
     && dpkg -i /root/linuxqq_amd64.deb && apt-get -f install -y && rm /root/linuxqq_amd64.deb
 
+RUN useradd -m monokai \
+    && chown -R monokai:monokai /home/monokai 
 
-# 下载 安装：LiteLoader
-RUN curl -L -o /tmp/LiteLoaderQQNT.zip https://github.com/LiteLoaderQQNT/LiteLoaderQQNT/releases/latest/download/LiteLoaderQQNT.zip \
-    && unzip /tmp/LiteLoaderQQNT.zip -d /root/LiteLoaderQQNT/ && rm /tmp/LiteLoaderQQNT.zip \
-# 修改/opt/QQ/resources/app/package.json文件
-    && sed -i '1i require(String.raw`/root/LiteLoaderQQNT`);' /opt/QQ/resources/app/app_launcher/index.js 
-
+RUN apt-get update &&  apt-get install -y sudo  && echo "monokai ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/monokai
+# 下载 安装：LiteLoader https://github.com/Mzdyl/LiteLoaderQQNT_Install
+RUN curl -L "https://github.com/Mzdyl/LiteLoaderQQNT_Install/raw/main/install.sh" -o /tmp/LiteLoaderQQNT_Install.sh \
+    && chmod +x /tmp/LiteLoaderQQNT_Install.sh \
+    && su monokai -c "/tmp/LiteLoaderQQNT_Install.sh" \
+    && rm /tmp/LiteLoaderQQNT_Install.sh
 
 
 # 复制zip包 安装：chronocat
 COPY LiteLoaderPlugins/* /tmp/meow/
-RUN mkdir -p /root/LiteLoaderQQNT/plugins \
-  && find /tmp/meow/ -name '*.zip' -exec unzip -o -d /root/LiteLoaderQQNT/plugins/ {} \; \
+RUN mkdir -p /home/monokai/.local/share/LiteLoaderQQNT/plugins \
+  && find /tmp/meow/ -name '*.zip' -exec unzip -o -d /home/monokai/.local/share/LiteLoaderQQNT/plugins {} \; \
   && rm -r /tmp/meow/
 
 
