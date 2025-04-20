@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     fonts-wqy-zenhei \
     git \
     gnutls-bin \
+    sudo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
@@ -43,7 +44,7 @@ RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link\
 RUN useradd -m monokai \
     && chown -R monokai:monokai /home/monokai 
 
-RUN apt-get update &&  apt-get install -y sudo  && echo "monokai ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/monokai
+RUN echo "monokai ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/monokai
 # 下载 安装：LiteLoader https://github.com/Mzdyl/LiteLoaderQQNT_Install
 RUN curl -L "https://github.com/Mzdyl/LiteLoaderQQNT_Install/raw/main/install.sh" -o /tmp/LiteLoaderQQNT_Install.sh \
     && chmod +x /tmp/LiteLoaderQQNT_Install.sh \
