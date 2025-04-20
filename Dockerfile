@@ -1,7 +1,3 @@
-# 需要先在Dockerfile所在目录运行
-# git clone --depth 1 https://github.com/novnc/noVNC.git
-# git clone --depth 1 https://github.com/novnc/websockify.git
-
 # 再去 https://github.com/chrononeko/chronocat/releases
 # 下载 Chronocat 本体以及你需要的引擎 的 zip包 放到LiteLoaderPlugins目录下。
 
@@ -11,7 +7,7 @@ FROM ubuntu:22.04 as builder
 # 设置环境变量
 ARG DEBIAN_FRONTEND=noninteractive
 ENV VNC_PASSWD=vncpasswd
-ENV QQ_deb_Link=https://dldir1.qq.com/qqfile/qq/QQNT/Linux/QQ_3.2.7_240422_amd64_01.deb
+ENV QQ_deb_Link=https://dldir1.qq.com/qqfile/qq/QQNT/Linux/QQ_3.2.16_250401_amd64_01.deb
 # 安装必要的软件包
 RUN apt-get update && apt-get install -y \
     openbox \
