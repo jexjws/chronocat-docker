@@ -1,4 +1,4 @@
-# 再去 https://github.com/chrononeko/chronocat/releases
+# 去 https://github.com/chrononeko/chronocat/releases
 # 下载 Chronocat 本体以及你需要的引擎 的 zip包 放到LiteLoaderPlugins目录下。
 
 # 使用Ubuntu 22.04
@@ -6,8 +6,7 @@ FROM ubuntu:22.04 as builder
 
 # 设置环境变量
 ARG DEBIAN_FRONTEND=noninteractive
-ENV VNC_PASSWD=vncpasswd
-ENV QQ_deb_Link=https://dldir1.qq.com/qqfile/qq/QQNT/Linux/QQ_3.2.16_250401_amd64_01.deb
+RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.cernet.edu.cn@g' /etc/apt/sources.list
 # 安装必要的软件包
 RUN apt-get update && apt-get install -y \
     openbox \
@@ -30,6 +29,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
+ENV VNC_PASSWD=vncpasswd
+ENV QQ_deb_Link=https://dldir1.qq.com/qqfile/qq/QQNT/Linux/QQ_3.2.13_241118_amd64_01.deb
+
 # 复制项目文件夹 安装：novnc和websockify
 COPY noVNC /opt/noVNC
 COPY websockify /opt/noVNC/utils/websockify
@@ -44,7 +46,7 @@ RUN curl -o /root/linuxqq_amd64.deb $QQ_deb_Link\
 RUN useradd -m monokai \
     && chown -R monokai:monokai /home/monokai 
 
-RUN echo "monokai ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/monokai
+RUN echo "monokai ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/monokai
 # 下载 安装：LiteLoader https://github.com/Mzdyl/LiteLoaderQQNT_Install
 RUN curl -L "https://github.com/Mzdyl/LiteLoaderQQNT_Install/raw/main/install.sh" -o /tmp/LiteLoaderQQNT_Install.sh \
     && chmod +x /tmp/LiteLoaderQQNT_Install.sh \
@@ -54,9 +56,9 @@ RUN curl -L "https://github.com/Mzdyl/LiteLoaderQQNT_Install/raw/main/install.sh
 
 # 复制zip包 安装：chronocat
 COPY LiteLoaderPlugins/* /tmp/meow/
-RUN mkdir -p /home/monokai/.local/share/LiteLoaderQQNT/plugins \
-  && find /tmp/meow/ -name '*.zip' -exec unzip -o -d /home/monokai/.local/share/LiteLoaderQQNT/plugins {} \; \
-  && rm -r /tmp/meow/
+RUN su monokai -c "mkdir -p /home/monokai/.local/share/LiteLoaderQQNT/plugins \
+  && find /tmp/meow/ -name '*.zip' -exec unzip -o -d /home/monokai/.local/share/LiteLoaderQQNT/plugins {} \; " \
+  &&  rm -r /tmp/meow/ 
 
 
 # 创建 supervisor配置、start.sh

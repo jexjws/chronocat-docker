@@ -1,6 +1,6 @@
 services:
   chronocat-docker:
-    image: yuukinya/chronocat-docker
+    image: swr.cn-south-1.myhuaweicloud.com/imjcr/chronocat:latest
     tty: true
     container_name: chronocat-docker
     restart: always
@@ -12,5 +12,5 @@ services:
       - TZ=Asia/Shanghai
       - VNC_PASSWD=vncpasswd
     volumes:
-      - ./config:/root/.chronocat/config
+      - ./config:/home/monokai/.chronocat/config
       # - ./data/QQ:/root/.config/QQ #QQ数据固化目录，请先阅读README再使用
