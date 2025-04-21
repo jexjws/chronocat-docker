@@ -1,12 +1,11 @@
 # 去 https://github.com/chrononeko/chronocat/releases
 # 下载 Chronocat 本体以及你需要的引擎 的 zip包 放到LiteLoaderPlugins目录下。
 
-# 使用Ubuntu 22.04
-FROM ubuntu:22.04 as builder
 
-# 设置环境变量
-ARG DEBIAN_FRONTEND=noninteractive
+FROM ubuntu:24.04 as builder
+
 RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.cernet.edu.cn@g' /etc/apt/sources.list
+ARG DEBIAN_FRONTEND=noninteractive
 # 安装必要的软件包
 RUN apt-get update && apt-get install -y \
     openbox \
@@ -21,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     libsecret-1-0 \
     libgbm1 \
-    libasound2 \
+    libasound2t64 \
     fonts-wqy-zenhei \
     git \
     gnutls-bin \
