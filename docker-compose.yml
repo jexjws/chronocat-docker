@@ -1,6 +1,6 @@
 services:
   chronocat-docker:
-    image: swr.cn-south-1.myhuaweicloud.com/imjcr/chronocat:latest
+    # image: swr.cn-south-1.myhuaweicloud.com/imjcr/chronocat:latest
     tty: true
     container_name: chronocat-docker
     restart: always
